@@ -20,12 +20,12 @@
 
   我们在LvalType枚举中添加了LVAL_MACRO类型：
 
-    ```c
+```c
     typedef enum {
       LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_ERR,
       LVAL_FUN, LVAL_LAMBDA, LVAL_MACRO
   } LvalType;
-    ```
+```
 
   2. 宏值结构
 
