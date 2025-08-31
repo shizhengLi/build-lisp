@@ -39,7 +39,7 @@
 
   项目结构
 
-  .
+  ```.
   ├── Makefile              # 编译配置
   ├── README.md            # 项目说明（中文）
   ├── README.en.md         # 项目说明（英文）
@@ -63,7 +63,7 @@
       ├── test_macro.c   # 宏系统测试
       ├── test_runner.c  # 测试运行器
       └── test_macro_only.c # 宏系统独立测试
-
+```
   功能特性
 
   支持的数据类型

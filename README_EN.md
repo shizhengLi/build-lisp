@@ -40,7 +40,7 @@
   make memcheck
 
   Project Structure
-
+```c
   .
   ├── Makefile              # Build configuration
   ├── README.md            # Project documentation (Chinese)
@@ -65,7 +65,7 @@
       ├── test_macro.c   # Macro system tests
       ├── test_runner.c  # Test runner
       └── test_macro_only.c # Macro system standalone tests
-
+```
   Features
 
   Supported Data Types
