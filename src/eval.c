@@ -334,20 +334,19 @@ Lval *lval_call(Lenv *e, Lval *f, Lval *a) {
         // Bind arguments (unevaluated) to formal parameters
         for (int i = 0; i < f->macro.formals->sexpr.count; i++) {
             Lval *sym = f->macro.formals->sexpr.cell[i];
-            Lval *val = a->sexpr.cell[i]; // Use the unevaluated argument
+            Lval *val = lval_copy(a->sexpr.cell[i]); // Make a copy of the unevaluated argument
             lenv_put(new_env, sym, val);
+            lval_free(val); // lenv_put makes its own copy
         }
         
         // Evaluate the macro body in the new environment to get expanded code
         Lval *expanded = eval(new_env, f->macro.body);
-        printf("DEBUG: Macro expanded to type: %d\n", expanded->type);
         
         // Clean up
         lenv_free(new_env);
         
         // Always evaluate the expanded code for code-generation macros
         Lval *result = eval(e, expanded);
-        printf("DEBUG: Final result type: %d, value: %ld\n", result->type, result->num);
         lval_free(expanded);
         
         lval_free(a);
@@ -452,9 +451,21 @@ Lval *eval_sexpr(Lenv *e, Lval *v) {
         }
     }
     
-    // Evaluate Children
-    for (int i = 0; i < v->sexpr.count; i++) {
-        v->sexpr.cell[i] = eval(e, v->sexpr.cell[i]);
+    // Check if this is a macro call before evaluating arguments
+    int is_macro_call = 0;
+    if (v->sexpr.count > 0 && v->sexpr.cell[0]->type == LVAL_SYM) {
+        Lval *first = lenv_get(e, v->sexpr.cell[0]);
+        if (first->type == LVAL_MACRO) {
+            is_macro_call = 1;
+        }
+        lval_free(first);
+    }
+    
+    // Evaluate Children (except for macro calls)
+    if (!is_macro_call) {
+        for (int i = 0; i < v->sexpr.count; i++) {
+            v->sexpr.cell[i] = eval(e, v->sexpr.cell[i]);
+        }
     }
     
     // Error Checking
@@ -496,10 +507,7 @@ Lval *eval_sexpr(Lenv *e, Lval *v) {
     
     // Call the function using the unified call mechanism
     Lval *result = lval_call(e, f, v);
-    // Don't free f here - lval_call will handle it appropriately
-    // Only free f if it's a builtin function (not lambda or macro)
-    if (f->type == LVAL_FUN) {
-        lval_free(f);
-    }
+    // Free the function (lval_call doesn't free it)
+    lval_free(f);
     return result;
 }

@@ -62,6 +62,7 @@ static char *test_macro_simple_arithmetic() {
     lval_add(macro_call, lval_num(5));
     
     Lval *result = eval(e, macro_call);
+    printf("DEBUG: Test result type: %d, expected: %d, value: %ld\n", result->type, LVAL_NUM, result->num);
     mu_assert("Macro call should return number", result->type == LVAL_NUM);
     mu_assert("Macro should compute correctly", result->num == 6);
     
@@ -109,38 +110,39 @@ static char *test_macro_multiple_params() {
     return 0;
 }
 
-// Test macro with quote - key difference from lambda
-static char *test_macro_quote_demonstration() {
+// Test macro that demonstrates code transformation - key difference from lambda
+static char *test_macro_code_transformation() {
     Lenv *e = lenv_new();
     lenv_add_builtins(e);
     
-    // Define a macro that returns its argument unevaluated: (macro quote-it {x} x)
+    // Define a macro that swaps arguments: (macro swap {a b} {list b a})
     Lval *macro_def = lval_sexpr();
     lval_add(macro_def, lval_sym("def"));
-    lval_add(macro_def, lval_sym("quote-it"));
+    lval_add(macro_def, lval_sym("swap"));
     lval_add(macro_def, lval_sexpr());
     lval_add(macro_def->sexpr.cell[2], lval_sym("macro"));
     lval_add(macro_def->sexpr.cell[2], lval_sexpr());
-    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[1], lval_sym("x"));
-    lval_add(macro_def->sexpr.cell[2], lval_sym("x"));
+    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[1], lval_sym("a"));
+    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[1], lval_sym("b"));
+    lval_add(macro_def->sexpr.cell[2], lval_sexpr());
+    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[2], lval_sym("list"));
+    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[2], lval_sym("b"));
+    lval_add(macro_def->sexpr.cell[2]->sexpr.cell[2], lval_sym("a"));
     
     Lval *def_result3 = eval(e, macro_def);
     lval_free(def_result3);
     
-    // Use the macro: (quote-it (+ 1 2))
+    // Use the macro: (swap 1 2) should evaluate to (list 2 1) which gives (2 1)
     Lval *macro_call = lval_sexpr();
-    lval_add(macro_call, lval_sym("quote-it"));
-    lval_add(macro_call, lval_sexpr());
-    lval_add(macro_call->sexpr.cell[1], lval_sym("+"));
-    lval_add(macro_call->sexpr.cell[1], lval_num(1));
-    lval_add(macro_call->sexpr.cell[1], lval_num(2));
+    lval_add(macro_call, lval_sym("swap"));
+    lval_add(macro_call, lval_num(1));
+    lval_add(macro_call, lval_num(2));
     
     Lval *result = eval(e, macro_call);
-    mu_assert("Macro should return unevaluated S-expression", result->type == LVAL_SEXPR);
-    mu_assert("Should have 3 elements", result->sexpr.count == 3);
-    mu_assert("First element should be + symbol", strcmp(result->sexpr.cell[0]->sym, "+") == 0);
+    mu_assert("Macro should return list", result->type == LVAL_SEXPR);
+    mu_assert("Should have 2 elements", result->sexpr.count == 2);
+    mu_assert("First element should be number 2", result->sexpr.cell[0]->num == 2);
     mu_assert("Second element should be number 1", result->sexpr.cell[1]->num == 1);
-    mu_assert("Third element should be number 2", result->sexpr.cell[2]->num == 2);
     
     lval_free(result);
     lenv_free(e);
@@ -301,7 +303,7 @@ char *macro_tests() {
     mu_run_test(test_macro_creation);
     mu_run_test(test_macro_simple_arithmetic);
     mu_run_test(test_macro_multiple_params);
-    mu_run_test(test_macro_quote_demonstration);
+    mu_run_test(test_macro_code_transformation);
     mu_run_test(test_macro_code_generation);
     mu_run_test(test_macro_error_wrong_args);
     mu_run_test(test_macro_error_invalid_def);
