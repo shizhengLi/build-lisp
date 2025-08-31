@@ -134,6 +134,7 @@ char* test_builtin_join() {
 char* test_eval_list_functions() {
     // Test evaluating list functions through eval
     Lenv* env = lenv_new();
+    lenv_add_builtins(env);
     Lval* expr = lval_sexpr();
     lval_add(expr, lval_sym("list"));
     lval_add(expr, lval_num(1));

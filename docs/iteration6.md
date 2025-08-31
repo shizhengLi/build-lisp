@@ -1,55 +1,55 @@
-# Iteration 6: Built-in Mathematical Operators
+# 迭代6：内置数学运算符
 
-## Overview
-In this iteration, we refined and extended the mathematical operator system introduced in Iteration 5. We added comprehensive error handling, support for unary operations, and ensured robust behavior for edge cases in mathematical computations.
+## 概述
+在本迭代中，我们完善和扩展了迭代5中介绍的数学运算符系统。我们添加了全面的错误处理、一元运算支持，并确保了数学计算中边缘情况的稳健行为。
 
-## Knowledge Points
+## 知识点
 
-### 1. Mathematical Operator Theory
-- **Binary operations**: Standard arithmetic operations with two or more operands
-- **Unary operations**: Support for negation (unary minus)
-- **Operand validation**: Type checking and argument count validation
-- **Error conditions**: Division by zero, modulo by zero, invalid operators
+### 1. 数学运算符理论
+- **二元运算**：具有两个或更多操作数的标准算术运算
+- **一元运算**：支持取负（一元减号）
+- **操作数验证**：类型检查和参数计数验证
+- **错误条件**：除零、模零、无效运算符
 
-### 2. Error Handling Strategies
-- **Early validation**: Check arguments before performing operations
-- **Memory safety**: Proper cleanup of resources even when errors occur
-- **Error propagation**: Ensure errors bubble up through the evaluation stack
-- **Descriptive messages**: Clear error messages for different failure conditions
+### 2. 错误处理策略
+- **早期验证**：在执行操作前检查参数
+- **内存安全**：即使发生错误也能正确清理资源
+- **错误传播**：确保错误在求值栈中向上传递
+- **描述性消息**：针对不同失败条件的清晰错误消息
 
-### 3. Memory Management in Evaluation
-- **Resource ownership**: Clear understanding of which function owns which memory
-- **Cleanup on error**: Ensure no memory leaks when operations fail
-- **Temporary value management**: Proper handling of intermediate computation results
+### 3. 求值中的内存管理
+- **资源所有权**：明确理解哪个函数拥有哪块内存
+- **错误时清理**：确保操作失败时没有内存泄漏
+- **临时值管理**：正确处理中间计算结果
 
-## Implementation Details
+## 实现细节
 
-### Enhanced Built-in Operator Function
+### 增强的内置运算符函数
 ```c
 Lval *builtin_op(Lenv *e, Lval *a, char *op) {
-    // Check if operator is valid
+    // 检查运算符是否有效
     if (strcmp(op, "+") != 0 && strcmp(op, "-") != 0 && 
         strcmp(op, "*") != 0 && strcmp(op, "/") != 0 && strcmp(op, "%") != 0) {
         lval_free(a);
-        return lval_err("Invalid operator!");
+        return lval_err("无效运算符！");
     }
     
-    // Ensure all arguments are numbers
+    // 确保所有参数都是数字
     for (int i = 0; i < a->sexpr.count; i++) {
         if (a->sexpr.cell[i]->type != LVAL_NUM) {
             lval_free(a);
-            return lval_err("Cannot operate on non-number!");
+            return lval_err("不能对非数字进行运算！");
         }
     }
     
     Lval *x = lval_pop(a, 0);
     
-    // Handle unary minus
+    // 处理一元减号
     if ((strcmp(op, "-") == 0) && a->sexpr.count == 0) {
         x->num = -x->num;
     }
     
-    // While there are still elements remaining
+    // 当还有剩余元素时
     while (a->sexpr.count > 0) {
         Lval *y = lval_pop(a, 0);
         
@@ -60,7 +60,7 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
             if (y->num == 0) {
                 lval_free(x);
                 lval_free(y);
-                x = lval_err("Division by zero!");
+                x = lval_err("除零错误！");
                 break;
             }
             x->num /= y->num; 
@@ -69,7 +69,7 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
             if (y->num == 0) {
                 lval_free(x);
                 lval_free(y);
-                x = lval_err("Modulo by zero!");
+                x = lval_err("模零错误！");
                 break;
             }
             x->num %= y->num; 
@@ -83,119 +83,119 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
 }
 ```
 
-### Supported Operations
+### 支持的运算
 
-#### Addition (+)
-- **Syntax**: `(+ number1 number2 ...)`
-- **Behavior**: Sums all numbers
-- **Examples**: 
+#### 加法 (+)
+- **语法**：`(+ 数字1 数字2 ...)`
+- **行为**：对所有数字求和
+- **示例**：
   - `(+ 1 2 3)` → `6`
   - `(+ 10)` → `10`
-  - `(+)` → Error (requires at least one argument for unary context)
+  - `(+)` → 错误（一元上下文至少需要一个参数）
 
-#### Subtraction (-)
-- **Syntax**: `(- number1 number2 ...)` or `(- number)`
-- **Behavior**: Subtracts all subsequent numbers from the first, or negates a single number
-- **Examples**:
+#### 减法 (-)
+- **语法**：`(- 数字1 数字2 ...)` 或 `(- 数字)`
+- **行为**：从第一个数字中减去所有后续数字，或对单个数字取负
+- **示例**：
   - `(- 10 3 2)` → `5`
-  - `(- 5)` → `-5` (unary negation)
+  - `(- 5)` → `-5`（一元取负）
 
-#### Multiplication (*)
-- **Syntax**: `(* number1 number2 ...)`
-- **Behavior**: Multiplies all numbers together
-- **Examples**:
+#### 乘法 (*)
+- **语法**：`(* 数字1 数字2 ...)`
+- **行为**：将所有数字相乘
+- **示例**：
   - `(* 2 3 4)` → `24`
   - `(* 5)` → `5`
 
-#### Division (/)
-- **Syntax**: `(/ number1 number2 ...)`
-- **Behavior**: Divides the first number by all subsequent numbers
-- **Error**: Division by zero returns error
-- **Examples**:
+#### 除法 (/)
+- **语法**：`(/ 数字1 数字2 ...)`
+- **行为**：用第一个数字除以所有后续数字
+- **错误**：除零返回错误
+- **示例**：
   - `(/ 100 5 2)` → `10`
-  - `(/ 10 0)` → Error: "Division by zero!"
+  - `(/ 10 0)` → 错误："除零错误！"
 
-#### Modulo (%)
-- **Syntax**: `(% number1 number2)`
-- **Behavior**: Returns remainder of division (currently binary only)
-- **Error**: Modulo by zero returns error
-- **Examples**:
+#### 取模 (%)
+- **语法**：`(% 数字1 数字2)`
+- **行为**：返回除法的余数（当前仅支持二元）
+- **错误**：模零返回错误
+- **示例**：
   - `(% 17 5)` → `2`
-  - `(% 10 0)` → Error: "Modulo by zero!"
+  - `(% 10 0)` → 错误："模零错误！"
 
-## Challenges and Solutions
+## 挑战与解决方案
 
-### 1. Unary Operator Support
-**Problem**: The subtraction operator needed to support both binary subtraction and unary negation.
+### 1. 一元运算符支持
+**问题**：减法运算符需要支持二元减法和一元取负。
 
-**Solution**: Added special logic to detect when `-` is used with only one argument and handle it as negation:
+**解决方案**：添加特殊逻辑来检测`-`何时只与一个参数一起使用，并将其作为取负处理：
 ```c
 if ((strcmp(op, "-") == 0) && a->sexpr.count == 0) {
     x->num = -x->num;
 }
 ```
 
-### 2. Division by Zero Handling
-**Problem**: Division by zero is mathematically undefined and could cause crashes.
+### 2. 除零处理
+**问题**：除零在数学上是未定义的，可能导致程序崩溃。
 
-**Solution**: Added explicit checks before division operations:
+**解决方案**：在除法运算前添加显式检查：
 ```c
 if (y->num == 0) {
     lval_free(x);
     lval_free(y);
-    x = lval_err("Division by zero!");
+    x = lval_err("除零错误！");
     break;
 }
 ```
 
-### 3. Memory Leaks in Error Cases
-**Problem**: When errors occur during evaluation, intermediate values need to be cleaned up properly.
+### 3. 错误情况下的内存泄漏
+**问题**：当求值过程中发生错误时，需要正确清理中间值。
 
-**Solution**: Ensured proper cleanup of all allocated memory before returning errors:
+**解决方案**：确保在返回错误之前正确清理所有分配的内存：
 ```c
 lval_free(x);
 lval_free(y);
-x = lval_err("Division by zero!");
+x = lval_err("除零错误！");
 ```
 
-### 4. Type Safety
-**Problem**: Mathematical operations should only work on numbers, but the evaluation system could pass other types.
+### 4. 类型安全
+**问题**：数学运算应该只对数字有效，但求值系统可能传递其他类型。
 
-**Solution**: Added comprehensive type checking:
+**解决方案**：添加全面的类型检查：
 ```c
 for (int i = 0; i < a->sexpr.count; i++) {
     if (a->sexpr.cell[i]->type != LVAL_NUM) {
         lval_free(a);
-        return lval_err("Cannot operate on non-number!");
+        return lval_err("不能对非数字进行运算！");
     }
 }
 ```
 
-### 5. Operator Validation
-**Problem**: The system needed to distinguish between valid mathematical operators and invalid symbols.
+### 5. 运算符验证
+**问题**：系统需要区分有效的数学运算符和无效符号。
 
-**Solution**: Added explicit operator validation:
+**解决方案**：添加显式运算符验证：
 ```c
 if (strcmp(op, "+") != 0 && strcmp(op, "-") != 0 && 
     strcmp(op, "*") != 0 && strcmp(op, "/") != 0 && strcmp(op, "%") != 0) {
     lval_free(a);
-    return lval_err("Invalid operator!");
+    return lval_err("无效运算符！");
 }
 ```
 
-## Test Coverage
-Extended testing to cover:
-- All mathematical operations with multiple arguments
-- Unary negation functionality
-- Division by zero error handling
-- Modulo by zero error handling
-- Type error handling for non-number arguments
-- Invalid operator error handling
-- Nested mathematical expressions
-- Edge cases with single arguments
+## 测试覆盖
+扩展测试以涵盖：
+- 具有多个参数的所有数学运算
+- 一元取负功能
+- 除零错误处理
+- 模零错误处理
+- 非数字参数的类型错误处理
+- 无效运算符错误处理
+- 嵌套数学表达式
+- 单个参数的边缘情况
 
-## Usage Examples
-The mathematical operators now work reliably:
+## 使用示例
+数学运算符现在可靠地工作：
 
 ```lisp
 lispy> (+ 1 2 3 4 5)
@@ -217,30 +217,30 @@ lispy> (% 17 5)
 2
 
 lispy> (/ 10 0)
-Error: Division by zero!
+Error: 除零错误！
 
 lispy> (+ 1 "two")
-Error: Cannot operate on non-number!
+Error: 不能对非数字进行运算！
 
 lispy> (invalid 1 2)
-Error: Invalid operator!
+Error: 无效运算符！
 ```
 
-## Performance Considerations
-- **Memory efficiency**: Proper cleanup prevents memory leaks during operations
-- **Early validation**: Fail fast when arguments are invalid
-- **Iterative processing**: Process arguments sequentially to minimize memory usage
+## 性能考虑
+- **内存效率**：正确清理防止运算过程中的内存泄漏
+- **早期验证**：参数无效时快速失败
+- **迭代处理**：顺序处理参数以最小化内存使用
 
-## Current Limitations
-- Modulo operation currently only supports two arguments
-- No support for floating-point numbers (integer only)
-- No built-in mathematical functions (sin, cos, sqrt, etc.)
-- Limited to basic arithmetic operations
+## 当前限制
+- 取模运算当前仅支持两个参数
+- 不支持浮点数（仅整数）
+- 没有内置数学函数（sin、cos、sqrt等）
+- 仅限于基本算术运算
 
-## Next Steps
-With robust mathematical operators implemented, the next iteration will focus on adding list manipulation functions (head, tail, list, cons, join) to extend the interpreter's capabilities beyond numerical computations.
+## 下一步
+随着稳健的数学运算符的实现，下一个迭代将专注于添加列表操作函数（head、tail、list、cons、join），以扩展解释器超越数值计算的能力。
 
-## Key Files Modified
-- `src/eval.c`: Enhanced mathematical operator implementation
-- `test/test_eval.c`: Extended test coverage for mathematical operations
-- `docs/iteration6.md`: This documentation file
+## 关键修改文件
+- `src/eval.c`：增强的数学运算符实现
+- `test/test_eval.c`：扩展的数学运算测试覆盖
+- `docs/iteration6.md`：本文档文件

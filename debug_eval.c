@@ -32,6 +32,9 @@ int main() {
     lval_add(sexpr, lval_num(1));
     lval_add(sexpr, lval_num(2));
     
+    printf("Created S-expression with %d children\n", sexpr->sexpr.count);
+    printf("First child type: %d (should be LVAL_SYM=1)\n", sexpr->sexpr.cell[0]->type);
+    
     result = eval(env, sexpr);
     printf("Result type: %d\n", result->type);
     printf("Expected type: %d\n", LVAL_NUM);

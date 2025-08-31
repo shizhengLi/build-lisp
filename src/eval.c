@@ -231,28 +231,40 @@ Lval *eval_sexpr(Lenv *e, Lval *v) {
         return lval_take(v, 0);
     }
     
-    // Ensure First Element is Symbol
+    // Ensure First Element is Function or Symbol
     Lval *f = lval_pop(v, 0);
-    if (f->type != LVAL_SYM) {
+    if (f->type != LVAL_FUN && f->type != LVAL_SYM) {
         lval_free(f);
         lval_free(v);
-        return lval_err("S-expression Does not start with symbol!");
+        return lval_err("S-expression Does not start with function!");
+    }
+    
+    // If it's a symbol, look up the function
+    if (f->type == LVAL_SYM) {
+        Lval *func = lenv_get(e, f);
+        lval_free(f);
+        f = func;
+        if (f->type != LVAL_FUN) {
+            lval_free(f);
+            lval_free(v);
+            return lval_err("Symbol does not evaluate to function!");
+        }
     }
     
     // Call builtin with operator or list function
     Lval *result;
-    if (strcmp(f->sym, "head") == 0) {
+    if (strcmp(f->fun, "head") == 0) {
         result = builtin_head(v);
-    } else if (strcmp(f->sym, "tail") == 0) {
+    } else if (strcmp(f->fun, "tail") == 0) {
         result = builtin_tail(v);
-    } else if (strcmp(f->sym, "list") == 0) {
+    } else if (strcmp(f->fun, "list") == 0) {
         result = builtin_list(v);
-    } else if (strcmp(f->sym, "cons") == 0) {
+    } else if (strcmp(f->fun, "cons") == 0) {
         result = builtin_cons(v);
-    } else if (strcmp(f->sym, "join") == 0) {
+    } else if (strcmp(f->fun, "join") == 0) {
         result = builtin_join(v);
     } else {
-        result = builtin_op(e, v, f->sym);
+        result = builtin_op(e, v, f->fun);
     }
     
     lval_free(f);

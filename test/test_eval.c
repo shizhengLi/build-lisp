@@ -8,6 +8,7 @@
 
 char *test_eval_num() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *result = eval(env, lval_num(123));
     mu_assert("Error: eval number should return itself", result != NULL);
     mu_assert("Error: should be number type", result->type == LVAL_NUM);
@@ -20,10 +21,19 @@ char *test_eval_num() {
 
 char *test_eval_sym() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
+    // Test evaluating a symbol that exists (should return function)
     Lval *result = eval(env, lval_sym("+"));
-    mu_assert("Error: eval symbol should return error", result != NULL);
-    mu_assert("Error: should be error type", result->type == LVAL_ERR);
+    mu_assert("Error: eval symbol '+' should return function", result != NULL);
+    mu_assert("Error: should be function type", result->type == LVAL_FUN);
     lval_free(result);
+    
+    // Test evaluating a symbol that doesn't exist (should return error)
+    Lval *result2 = eval(env, lval_sym("nonexistent"));
+    mu_assert("Error: eval nonexistent symbol should return error", result2 != NULL);
+    mu_assert("Error: should be error type", result2->type == LVAL_ERR);
+    lval_free(result2);
+    
     lenv_free(env);
     
     return NULL;
@@ -31,6 +41,7 @@ char *test_eval_sym() {
 
 char *test_eval_sexpr() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("+"));
     lval_add(sexpr, lval_num(1));
@@ -48,6 +59,7 @@ char *test_eval_sexpr() {
 
 char *test_builtin_add() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("+"));
     lval_add(sexpr, lval_num(10));
@@ -64,6 +76,7 @@ char *test_builtin_add() {
 
 char *test_builtin_sub() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("-"));
     lval_add(sexpr, lval_num(100));
@@ -80,6 +93,7 @@ char *test_builtin_sub() {
 
 char *test_builtin_mul() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("*"));
     lval_add(sexpr, lval_num(2));
@@ -96,6 +110,7 @@ char *test_builtin_mul() {
 
 char *test_builtin_div() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("/"));
     lval_add(sexpr, lval_num(100));
@@ -112,6 +127,7 @@ char *test_builtin_div() {
 
 char *test_builtin_mod() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("%"));
     lval_add(sexpr, lval_num(17));
@@ -127,6 +143,7 @@ char *test_builtin_mod() {
 
 char *test_math_error() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     // Test division by zero
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("/"));
@@ -155,6 +172,7 @@ char *test_math_error() {
 
 char *test_nested_expressions() {
     Lenv *env = lenv_new();
+    lenv_add_builtins(env);
     Lval *sexpr = lval_sexpr();
     lval_add(sexpr, lval_sym("+"));
     

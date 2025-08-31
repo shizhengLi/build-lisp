@@ -1,28 +1,28 @@
-# Iteration 5: Basic Evaluation
+# 迭代5：基本求值
 
-## Overview
-In this iteration, we implemented the core evaluation engine that brings our Lisp interpreter to life. This enables the execution of Lisp expressions by converting parsed abstract syntax trees into actual computed values.
+## 概述
+在本迭代中，我们实现了核心求值引擎，使我们的Lisp解释器真正运行起来。这使得通过将解析的抽象语法树转换为实际计算值来执行Lisp表达式成为可能。
 
-## Knowledge Points
+## 知识点
 
-### 1. Evaluation Theory
-- **Symbol evaluation**: Symbols are looked up in the environment to get their bound values
-- **S-expression evaluation**: Lists are evaluated by evaluating each element and applying the first element as a function to the rest
-- **Self-evaluating forms**: Numbers, strings, and other literals evaluate to themselves
+### 1. 求值理论
+- **符号求值**：符号在环境中查找以获取其绑定值
+- **S表达式求值**：列表通过求值每个元素并将第一个元素作为函数应用于其余元素来求值
+- **自求值形式**：数字、字符串和其他字面量求值为自身
 
-### 2. Environment Integration
-- **Environment parameter**: All evaluation functions now take an environment parameter for variable lookup
-- **Symbol resolution**: When evaluating symbols, the environment is consulted to find bound values
-- **Error propagation**: Errors during evaluation are properly propagated up the call stack
+### 2. 环境集成
+- **环境参数**：所有求值函数现在都接受环境参数用于变量查找
+- **符号解析**：求值符号时，咨询环境以查找绑定值
+- **错误传播**：求值过程中的错误正确地在调用栈中向上传播
 
-### 3. Function Application
-- **Built-in operators**: Mathematical operators (+, -, *, /, %) are implemented as built-in functions
-- **Argument validation**: Functions validate their arguments (type checking, argument count)
-- **Error handling**: Comprehensive error handling for invalid operations (division by zero, type mismatches)
+### 3. 函数应用
+- **内置运算符**：数学运算符（+、-、*、/、%）实现为内置函数
+- **参数验证**：函数验证其参数（类型检查、参数计数）
+- **错误处理**：对无效操作的全面错误处理（除零、类型不匹配）
 
-## Implementation Details
+## 实现细节
 
-### Core Evaluation Function
+### 核心求值函数
 ```c
 Lval *eval(Lenv *e, Lval *v) {
     if (v->type == LVAL_SYM) {
@@ -35,72 +35,72 @@ Lval *eval(Lenv *e, Lval *v) {
 }
 ```
 
-### S-expression Evaluation
+### S表达式求值
 ```c
 Lval *eval_sexpr(Lenv *e, Lval *v) {
-    // Evaluate Children
+    // 求值子节点
     for (int i = 0; i < v->sexpr.count; i++) {
         v->sexpr.cell[i] = eval(e, v->sexpr.cell[i]);
     }
     
-    // Error Checking
+    // 错误检查
     for (int i = 0; i < v->sexpr.count; i++) {
         if (v->sexpr.cell[i]->type == LVAL_ERR) {
             return lval_take(v, i);
         }
     }
     
-    // Empty Expression
+    // 空表达式
     if (v->sexpr.count == 0) {
         return v;
     }
     
-    // Single Expression
+    // 单个表达式
     if (v->sexpr.count == 1) {
         return lval_take(v, 0);
     }
     
-    // Ensure First Element is Symbol
+    // 确保第一个元素是符号
     Lval *f = lval_pop(v, 0);
     if (f->type != LVAL_SYM) {
         lval_free(f);
         lval_free(v);
-        return lval_err("S-expression Does not start with symbol!");
+        return lval_err("S表达式不以符号开头！");
     }
     
-    // Call builtin with operator
+    // 调用内置运算符
     Lval *result = builtin_op(e, v, f->sym);
     lval_free(f);
     return result;
 }
 ```
 
-### Built-in Operator Implementation
+### 内置运算符实现
 ```c
 Lval *builtin_op(Lenv *e, Lval *a, char *op) {
-    // Check if operator is valid
+    // 检查运算符是否有效
     if (strcmp(op, "+") != 0 && strcmp(op, "-") != 0 && 
         strcmp(op, "*") != 0 && strcmp(op, "/") != 0 && strcmp(op, "%") != 0) {
         lval_free(a);
-        return lval_err("Invalid operator!");
+        return lval_err("无效运算符！");
     }
     
-    // Ensure all arguments are numbers
+    // 确保所有参数都是数字
     for (int i = 0; i < a->sexpr.count; i++) {
         if (a->sexpr.cell[i]->type != LVAL_NUM) {
             lval_free(a);
-            return lval_err("Cannot operate on non-number!");
+            return lval_err("不能对非数字进行运算！");
         }
     }
     
     Lval *x = lval_pop(a, 0);
     
-    // Handle unary minus
+    // 处理一元减号
     if ((strcmp(op, "-") == 0) && a->sexpr.count == 0) {
         x->num = -x->num;
     }
     
-    // While there are still elements remaining
+    // 当还有剩余元素时
     while (a->sexpr.count > 0) {
         Lval *y = lval_pop(a, 0);
         
@@ -111,7 +111,7 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
             if (y->num == 0) {
                 lval_free(x);
                 lval_free(y);
-                x = lval_err("Division by zero!");
+                x = lval_err("除零错误！");
                 break;
             }
             x->num /= y->num; 
@@ -120,7 +120,7 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
             if (y->num == 0) {
                 lval_free(x);
                 lval_free(y);
-                x = lval_err("Modulo by zero!");
+                x = lval_err("模零错误！");
                 break;
             }
             x->num %= y->num; 
@@ -134,50 +134,50 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
 }
 ```
 
-## Challenges and Solutions
+## 挑战与解决方案
 
-### 1. Environment Integration
-**Problem**: The evaluation system needed to work with the environment system for variable lookup, but the initial design didn't account for this.
+### 1. 环境集成
+**问题**：求值系统需要与环境系统配合进行变量查找，但初始设计没有考虑到这一点。
 
-**Solution**: Modified all evaluation functions to accept an environment parameter and integrated symbol lookup using the `lenv_get` function.
+**解决方案**：修改所有求值函数以接受环境参数，并使用`lenv_get`函数集成符号查找。
 
-### 2. Error Propagation
-**Problem**: Errors during evaluation need to be properly propagated without memory leaks.
+### 2. 错误传播
+**问题**：求值过程中的错误需要正确传播而不会导致内存泄漏。
 
-**Solution**: Implemented comprehensive error checking at each stage of evaluation and used the `lval_take` function to properly handle memory management when returning errors.
+**解决方案**：在求值的每个阶段实施全面的错误检查，并使用`lval_take`函数正确处理返回错误时的内存管理。
 
-### 3. Argument Validation
-**Problem**: Built-in operators need to validate their arguments before performing operations.
+### 3. 参数验证
+**问题**：内置运算符需要在执行操作前验证其参数。
 
-**Solution**: Added type checking to ensure all arguments are numbers and operator validation to ensure only supported operations are performed.
+**解决方案**：添加类型检查以确保所有参数都是数字，并进行运算符验证以确保只执行支持的操作。
 
-### 4. Memory Management
-**Problem**: Complex evaluation logic with multiple temporary values creates opportunities for memory leaks.
+### 4. 内存管理
+**问题**：具有多个临时值的复杂求值逻辑可能导致内存泄漏。
 
-**Solution**: Careful use of `lval_pop`, `lval_take`, and `lval_free` to ensure all intermediate values are properly cleaned up.
+**解决方案**：谨慎使用`lval_pop`、`lval_take`和`lval_free`以确保所有中间值都被正确清理。
 
-### 5. Unary Operators
-**Problem**: Mathematical operators like `-` can be used as unary operators (negation) or binary operators (subtraction).
+### 5. 一元运算符
+**问题**：像`-`这样的数学运算符可以用作一元运算符（取负）或二元运算符（减法）。
 
-**Solution**: Added special handling for unary minus when there's only one argument after the operator.
+**解决方案**：当运算符后只有一个参数时，添加特殊处理来处理一元减号。
 
-## Test Coverage
-Created comprehensive tests covering:
-- Basic evaluation of numbers and symbols
-- S-expression evaluation with mathematical operations
-- All mathematical operators (+, -, *, /, %)
-- Error handling for invalid operations
-- Division by zero and modulo by zero errors
-- Nested expression evaluation
-- Argument type validation
+## 测试覆盖
+创建了全面的测试，涵盖：
+- 数字和符号的基本求值
+- 带数学运算的S表达式求值
+- 所有数学运算符（+、-、*、/、%）
+- 无效操作的错误处理
+- 除零和模零错误
+- 嵌套表达式求值
+- 参数类型验证
 
-## Current Status
-The basic evaluation system is now functional and can handle mathematical expressions with proper error handling. The interpreter can evaluate expressions like `(+ 1 2 3)`, `(- 10 5)`, `(* 2 3 4)`, `(/ 100 5)`, and `(% 17 5)`.
+## 当前状态
+基本求值系统现已功能化，可以正确处理数学表达式和错误处理。解释器可以求值如`(+ 1 2 3)`、`(- 10 5)`、`(* 2 3 4)`、`(/ 100 5)`和`(% 17 5)`等表达式。
 
-## Next Steps
-With basic evaluation working, the next iteration will focus on adding list manipulation functions (head, tail, list, cons, join) to extend the interpreter's capabilities beyond mathematical operations.
+## 下一步
+基本求值功能正常工作后，下一个迭代将专注于添加列表操作函数（head、tail、list、cons、join），以扩展解释器超越数学运算的能力。
 
-## Key Files Modified
-- `src/eval.c`: Core evaluation engine implementation
-- `src/eval.h`: Evaluation function declarations
-- `test/test_eval.c`: Comprehensive test suite for evaluation functionality
+## 关键修改文件
+- `src/eval.c`：核心求值引擎实现
+- `src/eval.h`：求值函数声明
+- `test/test_eval.c`：求值功能的全面测试套件

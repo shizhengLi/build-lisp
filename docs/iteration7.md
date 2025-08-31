@@ -1,34 +1,34 @@
-# Iteration 7: List Built-in Functions
+# 迭代 7：列表内置函数
 
-## Overview
-In this iteration, we implemented the core list manipulation functions that are fundamental to Lisp programming: `head`, `tail`, `list`, `cons`, and `join`. These functions allow users to work with S-expressions as lists, enabling list processing capabilities.
+## 概述
+在本迭代中，我们实现了Lisp编程中基本的列表操作函数：`head`、`tail`、`list`、`cons` 和 `join`。这些函数允许用户将S表达式作为列表来处理，提供了列表处理的能力。
 
-## Knowledge Points
+## 知识点
 
-### 1. List Manipulation Functions
-- **head**: Returns the first element of a list
-- **tail**: Returns all elements except the first one
-- **list**: Creates a list from its arguments
-- **cons**: Prepends an element to a list
-- **join**: Concatenates multiple lists into one
+### 1. 列表操作函数
+- **head**：返回列表的第一个元素
+- **tail**：返回除第一个元素外的所有元素
+- **list**：从参数创建列表
+- **cons**：将元素添加到列表头部
+- **join**：将多个列表连接成一个列表
 
-### 2. Memory Management
-- Understanding ownership transfer between Lval objects
-- Proper handling of nested memory structures
-- Avoiding double-free errors in complex operations
+### 2. 内存管理
+- 理解Lval对象之间的所有权转移
+- 正确处理嵌套内存结构
+- 在复杂操作中避免重复释放错误
 
-### 3. Error Handling
-- Validation of argument counts
-- Type checking for list operations
-- Handling edge cases (empty lists, invalid arguments)
+### 3. 错误处理
+- 参数数量验证
+- 列表操作的类型检查
+- 处理边界情况（空列表、无效参数）
 
-## Implementation Details
+## 实现细节
 
-### Built-in Function Architecture
-We extended the evaluation system to recognize and handle built-in functions alongside mathematical operators:
+### 内置函数架构
+我们扩展了求值系统，使其能够识别和处理内置函数以及数学运算符：
 
 ```c
-// In eval_sexpr function
+// 在 eval_sexpr 函数中
 if (strcmp(f->sym, "head") == 0) {
     result = builtin_head(v);
 } else if (strcmp(f->sym, "tail") == 0) {
@@ -44,10 +44,10 @@ if (strcmp(f->sym, "head") == 0) {
 }
 ```
 
-### Key Functions Added
+### 添加的关键函数
 
 #### lval_add_front
-Added a helper function to prepend elements to lists efficiently:
+添加了一个辅助函数来高效地在列表头部添加元素：
 
 ```c
 Lval *lval_add_front(Lval *v, Lval *x) {
@@ -60,7 +60,7 @@ Lval *lval_add_front(Lval *v, Lval *x) {
 ```
 
 #### builtin_head
-Extracts the first element from a list with proper error handling:
+从列表中提取第一个元素，并进行适当的错误处理：
 
 ```c
 Lval *builtin_head(Lval *a) {
@@ -89,34 +89,34 @@ Lval *builtin_head(Lval *a) {
 }
 ```
 
-## Challenges and Solutions
+## 挑战与解决方案
 
-### 1. Memory Management Issues
-**Problem**: Double-free errors occurred when test functions tried to free arguments that were already freed by built-in functions.
+### 1. 内存管理问题
+**问题**：当测试函数尝试释放已被内置函数释放的参数时，发生了重复释放错误。
 
-**Solution**: Understanding that built-in functions take ownership of their arguments and free them. Tests should only free the returned results.
+**解决方案**：理解内置函数会拥有其参数的所有权并释放它们。测试应该只释放返回的结果。
 
-### 2. Type Safety
-**Problem**: Ensuring list operations only work on S-expressions and handle edge cases properly.
+### 2. 类型安全
+**问题**：确保列表操作只在S表达式上工作，并正确处理边界情况。
 
-**Solution**: Comprehensive type checking and error messages for invalid inputs.
+**解决方案**：对无效输入进行全面的类型检查和错误消息。
 
-### 3. Nested Structure Access
-**Problem**: Accessing nested fields in the Lval union structure correctly.
+### 3. 嵌套结构访问
+**问题**：正确访问Lval联合结构中的嵌套字段。
 
-**Solution**: Using proper field access patterns like `result->sexpr.count` instead of `result->count`.
+**解决方案**：使用正确的字段访问模式，如 `result->sexpr.count` 而不是 `result->count`。
 
-## Test Coverage
-Added comprehensive tests covering:
-- Basic functionality of each list operation
-- Error conditions (empty lists, wrong types, invalid arguments)
-- Integration with the evaluation system
-- Memory management correctness
+## 测试覆盖
+添加了全面的测试，涵盖：
+- 每个列表操作的基本功能
+- 错误条件（空列表、错误类型、无效参数）
+- 与求值系统的集成
+- 内存管理正确性
 
-Total tests: 30 (6 new built-in function tests)
+总测试数：30（6个新的内置函数测试）
 
-## Usage Examples
-Once integrated into the REPL, users will be able to:
+## 使用示例
+一旦集成到REPL中，用户将能够：
 ```lisp
 lispy> (list 1 2 3)
 (1 2 3)
@@ -134,5 +134,5 @@ lispy> (join (list 1 2) (list 3 4))
 (1 2 3 4)
 ```
 
-## Next Steps
-With list manipulation functions implemented, the next iteration will focus on adding environment and variable support, enabling users to define and use variables in their Lisp programs.
+## 下一步
+随着列表操作函数的实现，下一个迭代将专注于添加环境和变量支持，使用户能够在他们的Lisp程序中定义和使用变量。

@@ -43,6 +43,21 @@ static int is_number(const char *str) {
     return 1;
 }
 
+static int is_number_at_position(const char *input, int pos) {
+    if (input[pos] == '-' || input[pos] == '+') {
+        if (!isdigit(input[pos + 1])) return 0;
+        pos++;
+    }
+    
+    if (!isdigit(input[pos])) return 0;
+    
+    while (isdigit(input[pos])) {
+        pos++;
+    }
+    
+    return 1;
+}
+
 static AstNode *parse_number(const char *input, int *pos) {
     char buffer[256];
     int i = 0;
@@ -93,6 +108,7 @@ static AstNode *parse_sexpr(const char *input, int *pos) {
             return create_error("Unclosed S-expression");
         }
         
+          
         if (input[*pos] == '(') {
             AstNode *child = parse_sexpr(input, pos);
             if (child == NULL) {
@@ -108,7 +124,7 @@ static AstNode *parse_sexpr(const char *input, int *pos) {
             node->sexpr.count++;
             node->sexpr.children = realloc(node->sexpr.children, sizeof(AstNode*) * node->sexpr.count);
             node->sexpr.children[node->sexpr.count - 1] = child;
-        } else if (is_number(&input[*pos])) {
+        } else if (is_number_at_position(input, *pos)) {
             AstNode *child = parse_number(input, pos);
             if (child == NULL) {
                 ast_free(node);

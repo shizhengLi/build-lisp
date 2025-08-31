@@ -92,6 +92,7 @@ char* test_undefined_variable() {
 char* test_variable_in_expression() {
     // Test using variables in mathematical expressions
     Lenv* env = lenv_new();
+    lenv_add_builtins(env);
     Lval* def_expr = lval_sexpr();
     lval_add(def_expr, lval_sym("def"));
     lval_add(def_expr, lval_sym("a"));
