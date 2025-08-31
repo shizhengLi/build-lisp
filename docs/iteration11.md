@@ -20,10 +20,12 @@
 
   我们在LvalType枚举中添加了LVAL_MACRO类型：
 
-  typedef enum {
+    ```c
+    typedef enum {
       LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_ERR,
       LVAL_FUN, LVAL_LAMBDA, LVAL_MACRO
   } LvalType;
+    ```
 
   2. 宏值结构
 
@@ -32,6 +34,7 @@
   - body：宏的主体（要返回的代码）
   - env：定义宏时的环境（用于闭包）
 
+```c
   typedef struct Lval {
       LvalType type;
       union {
@@ -43,9 +46,11 @@
           } macro;
       };
   } Lval;
+  ```
 
   3. 宏创建函数
 
+```c
   Lval *lval_macro(Lval *formals, Lval *body, Lenv *env) {
       Lval *v = malloc(sizeof(Lval));
       v->type = LVAL_MACRO;
@@ -54,11 +59,12 @@
       v->macro.env = env;  // 引用环境，不复制
       return v;
   }
+```
 
   4. 内置宏函数
 
   添加了macro特殊形式，用于创建宏：
-
+```c
   Lval *builtin_macro(Lenv *e, Lval *a) {
       // 移除'macro'符号
       Lval *macro_sym = lval_pop(a, 0);
@@ -88,6 +94,7 @@
 
       return result;
   }
+```
 
   5. 宏调用机制
 
@@ -95,7 +102,7 @@
 
   1. 展开：在宏的环境中执行宏体，生成新的代码
   2. 求值：在调用者的环境中对展开后的代码进行求值
-
+```c
   Lval *lval_call(Lenv *e, Lval *f, Lval *a) {
       // ... 内置函数处理
 
@@ -129,7 +136,7 @@
       }
       // ... 其他类型处理
   }
-
+```
   6. 内存管理
 
   宏系统的内存管理需要特别注意：
