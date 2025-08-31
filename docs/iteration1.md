@@ -1,5 +1,16 @@
 # 迭代1: 设置基本REPL框架
 
+
+
+http://daiyuwen.freeshell.org/gb/rol/roots_of_lisp.html
+https://www.paulgraham.com/avg.html
+https://www.paulgraham.com/diff.html
+https://www.paulgraham.com/lisplinks.html
+https://www.paulgraham.com/lispart.html
+https://www.paulgraham.com/apps.html
+https://www.paulgraham.com/people.html
+https://www.paulgraham.com/lispcode.html
+
 ## 目标
 创建一个简单的命令行REPL，能读取输入、回显输出。
 

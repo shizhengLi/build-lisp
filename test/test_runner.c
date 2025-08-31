@@ -11,6 +11,7 @@ char *sexpr_tests();
 char *eval_tests();
 char *builtin_tests();
 char *environment_tests();
+char *conditional_tests();
 
 int main() {
     char *result;
@@ -59,6 +60,13 @@ int main() {
     
     printf("Running Environment tests...\n");
     result = environment_tests();
+    if (result != 0) {
+        printf("%s\n", result);
+        return 1;
+    }
+    
+    printf("Running Conditional tests...\n");
+    result = conditional_tests();
     if (result != 0) {
         printf("%s\n", result);
         return 1;

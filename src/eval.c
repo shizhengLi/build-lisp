@@ -20,9 +20,12 @@ Lval *eval(Lenv *e, Lval *v) {
 
 Lval *builtin_op(Lenv *e, Lval *a, char *op) {
     (void)e; // Suppress unused parameter warning
+    
     // Check if operator is valid
     if (strcmp(op, "+") != 0 && strcmp(op, "-") != 0 && 
-        strcmp(op, "*") != 0 && strcmp(op, "/") != 0 && strcmp(op, "%") != 0) {
+        strcmp(op, "*") != 0 && strcmp(op, "/") != 0 && strcmp(op, "%") != 0 &&
+        strcmp(op, "=") != 0 && strcmp(op, ">") != 0 && strcmp(op, "<") != 0 &&
+        strcmp(op, ">=") != 0 && strcmp(op, "<=") != 0) {
         lval_free(a);
         return lval_err("Invalid operator!");
     }
@@ -43,6 +46,38 @@ Lval *builtin_op(Lenv *e, Lval *a, char *op) {
     }
     
     // While there are still elements remaining
+    // Handle comparison operators separately
+    if (strcmp(op, "=") == 0 || strcmp(op, ">") == 0 || strcmp(op, "<") == 0 ||
+        strcmp(op, ">=") == 0 || strcmp(op, "<=") == 0) {
+        
+        int result = 1; // Start with true
+        
+        for (int i = 0; i < a->sexpr.count; i++) {
+            Lval *y = a->sexpr.cell[i];
+            
+            if (strcmp(op, "=") == 0) { 
+                if (x->num != y->num) result = 0;
+            }
+            if (strcmp(op, ">") == 0) { 
+                if (x->num <= y->num) result = 0;
+            }
+            if (strcmp(op, "<") == 0) { 
+                if (x->num >= y->num) result = 0;
+            }
+            if (strcmp(op, ">=") == 0) { 
+                if (x->num < y->num) result = 0;
+            }
+            if (strcmp(op, "<=") == 0) { 
+                if (x->num > y->num) result = 0;
+            }
+        }
+        
+        lval_free(x);
+        lval_free(a);
+        return lval_num(result);
+    }
+    
+    // Handle mathematical operators
     while (a->sexpr.count > 0) {
         Lval *y = lval_pop(a, 0);
         
@@ -173,6 +208,55 @@ Lval *builtin_join(Lval *a) {
     return result;
 }
 
+Lval *builtin_if(Lenv *e, Lval *a) {
+    // Remove the 'if' symbol
+    Lval *if_sym = lval_pop(a, 0);
+    lval_free(if_sym);
+    
+    if (a->sexpr.count < 2 || a->sexpr.count > 3) {
+        lval_free(a);
+        return lval_err("Function 'if' passed incorrect number of arguments!");
+    }
+    
+    // Evaluate condition
+    Lval *cond = eval(e, lval_pop(a, 0));
+    if (cond->type == LVAL_ERR) {
+        lval_free(a);
+        return cond;
+    }
+    
+    Lval *result;
+    // Check if condition is truthy (non-zero number or non-empty list)
+    int truthy = 0;
+    if (cond->type == LVAL_NUM) {
+        truthy = (cond->num != 0);
+    } else if (cond->type == LVAL_SEXPR) {
+        truthy = (cond->sexpr.count > 0);
+    } else {
+        truthy = 1; // Other types are considered truthy
+    }
+    
+    lval_free(cond);
+    
+    if (truthy) {
+        // Return then branch
+        result = eval(e, lval_pop(a, 0));
+        lval_free(a);
+    } else {
+        // Return else branch if it exists, otherwise empty list
+        if (a->sexpr.count > 1) {
+            lval_free(lval_pop(a, 0)); // Remove then branch
+            result = eval(e, lval_pop(a, 0));
+            lval_free(a);
+        } else {
+            lval_free(a);
+            result = lval_sexpr(); // Empty list
+        }
+    }
+    
+    return result;
+}
+
 Lval *builtin_def(Lenv *e, Lval *a) {
     // Remove the 'def' symbol
     Lval *def_sym = lval_pop(a, 0);
@@ -201,11 +285,17 @@ Lval *builtin_def(Lenv *e, Lval *a) {
 }
 
 Lval *eval_sexpr(Lenv *e, Lval *v) {
-    // Check for special form 'def' before evaluating children
+    // Check for special forms before evaluating children
     if (v->sexpr.count > 0) {
         Lval *first = v->sexpr.cell[0];
-        if (first->type == LVAL_SYM && strcmp(first->sym, "def") == 0) {
-            return builtin_def(e, v);
+        
+        if (first->type == LVAL_SYM) {
+            if (strcmp(first->sym, "def") == 0) {
+                return builtin_def(e, v);
+            }
+            if (strcmp(first->sym, "if") == 0) {
+                return builtin_if(e, v);
+            }
         }
     }
     

@@ -135,7 +135,7 @@ static AstNode *parse_sexpr(const char *input, int *pos) {
             node->sexpr.count++;
             node->sexpr.children = realloc(node->sexpr.children, sizeof(AstNode*) * node->sexpr.count);
             node->sexpr.children[node->sexpr.count - 1] = child;
-        } else if (isalpha(input[*pos]) || input[*pos] == '+' || input[*pos] == '-' || input[*pos] == '*' || input[*pos] == '/' || input[*pos] == '%') {
+        } else if (isalpha(input[*pos]) || input[*pos] == '+' || input[*pos] == '-' || input[*pos] == '*' || input[*pos] == '/' || input[*pos] == '%' || input[*pos] == '=' || input[*pos] == '>' || input[*pos] == '<') {
             AstNode *child = parse_symbol(input, pos);
             if (child == NULL) {
                 ast_free(node);
@@ -180,7 +180,7 @@ AstNode *parse_string(const char *input) {
         return parse_number(input, &pos);
     }
     
-    if (isalpha(input[pos]) || input[pos] == '+' || input[pos] == '-' || input[pos] == '*' || input[pos] == '/' || input[pos] == '%') {
+    if (isalpha(input[pos]) || input[pos] == '+' || input[pos] == '-' || input[pos] == '*' || input[pos] == '/' || input[pos] == '%' || input[pos] == '=' || input[pos] == '>' || input[pos] == '<') {
         return parse_symbol(input, &pos);
     }
     

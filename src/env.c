@@ -65,6 +65,16 @@ void lenv_add_builtins(Lenv *e) {
         lval_free(func);
     }
     
+    // Comparison functions
+    char *comp_ops[] = {"=", ">", "<", ">=", "<="};
+    for (int i = 0; i < 5; i++) {
+        Lval *sym = lval_sym(comp_ops[i]);
+        Lval *func = lval_fun(comp_ops[i]);
+        lenv_put(e, sym, func);
+        lval_free(sym);
+        lval_free(func);
+    }
+    
     // List functions
     char *list_funcs[] = {"head", "tail", "list", "cons", "join"};
     for (int i = 0; i < 5; i++) {
