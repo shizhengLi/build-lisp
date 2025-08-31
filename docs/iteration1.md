@@ -1,6 +1,25 @@
 # 迭代1: 设置基本REPL框架
 
 
+https://dev.to/evantypanski/writing-a-simple-programming-language-from-scratch-part-1-54a2
+
+学习《龙书》（Compilers: Principles, Techniques, and Tools）或在线教程。从小项目开始，如实现一个计算器语言。
+
+https://grok.com/share/bGVnYWN5_8293b640-f018-4a2b-85ac-34b71347f2d6
+
+
+https://pgrandinetti.github.io/compilers/page/how-to-build-a-new-programming-language/
+
+https://pythoninstitute.org/about-python
+
+https://medium.com/thedeephub/guido-van-rossum-the-creator-of-the-python-programming-language-b85a7db3e8a0
+
+https://www.reddit.com/r/learnprogramming/comments/kjxytb/creating_your_own_programming_language/
+
+https://itsmybot.com/who-developed-python/
+
+https://www.freecodecamp.org/news/the-programming-language-pipeline-91d3f449c919/
+
 
 http://daiyuwen.freeshell.org/gb/rol/roots_of_lisp.html
 

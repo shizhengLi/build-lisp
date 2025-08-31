@@ -257,6 +257,155 @@ Lval *builtin_if(Lenv *e, Lval *a) {
     return result;
 }
 
+Lval *builtin_lambda(Lenv *e, Lval *a) {
+    // Remove the 'lambda' symbol
+    Lval *lambda_sym = lval_pop(a, 0);
+    lval_free(lambda_sym);
+    
+    if (a->sexpr.count != 2) {
+        lval_free(a);
+        return lval_err("Function 'lambda' passed incorrect number of arguments!");
+    }
+    
+    Lval *formals = lval_pop(a, 0);
+    Lval *body = lval_pop(a, 0);
+    
+    // Check if formals is a list of symbols
+    for (int i = 0; i < formals->sexpr.count; i++) {
+        if (formals->sexpr.cell[i]->type != LVAL_SYM) {
+            lval_free(formals);
+            lval_free(body);
+            lval_free(a);
+            return lval_err("Lambda formals must be symbols!");
+        }
+    }
+    
+    // Create lambda with current environment
+    Lval *result = lval_lambda(formals, body, e);
+    lval_free(a);
+    
+    return result;
+}
+
+Lval *builtin_macro(Lenv *e, Lval *a) {
+    // Remove the 'macro' symbol
+    Lval *macro_sym = lval_pop(a, 0);
+    lval_free(macro_sym);
+    
+    if (a->sexpr.count != 2) {
+        lval_free(a);
+        return lval_err("Function 'macro' passed incorrect number of arguments!");
+    }
+    
+    Lval *formals = lval_pop(a, 0);
+    Lval *body = lval_pop(a, 0);
+    
+    // Check if formals is a list of symbols
+    for (int i = 0; i < formals->sexpr.count; i++) {
+        if (formals->sexpr.cell[i]->type != LVAL_SYM) {
+            lval_free(formals);
+            lval_free(body);
+            lval_free(a);
+            return lval_err("Macro formals must be symbols!");
+        }
+    }
+    
+    // Create macro with current environment
+    Lval *result = lval_macro(formals, body, e);
+    lval_free(a);
+    
+    return result;
+}
+
+Lval *lval_call(Lenv *e, Lval *f, Lval *a) {
+      
+    // If it's a macro, perform macro expansion
+    if (f->type == LVAL_MACRO) {
+        // Check number of arguments
+        if (f->macro.formals->sexpr.count != a->sexpr.count) {
+            lval_free(a);
+            return lval_err("Macro passed wrong number of arguments!");
+        }
+        
+        // Create new environment with parent set to macro's environment (or current if NULL)
+        Lenv *new_env = lenv_new();
+        new_env->parent = f->macro.env ? f->macro.env : e;
+        
+        // Bind arguments (unevaluated) to formal parameters
+        for (int i = 0; i < f->macro.formals->sexpr.count; i++) {
+            Lval *sym = f->macro.formals->sexpr.cell[i];
+            Lval *val = a->sexpr.cell[i]; // Use the unevaluated argument
+            lenv_put(new_env, sym, val);
+        }
+        
+        // Evaluate the macro body in the new environment to get expanded code
+        Lval *expanded = eval(new_env, f->macro.body);
+        printf("DEBUG: Macro expanded to type: %d\n", expanded->type);
+        
+        // Clean up
+        lenv_free(new_env);
+        
+        // Always evaluate the expanded code for code-generation macros
+        Lval *result = eval(e, expanded);
+        printf("DEBUG: Final result type: %d, value: %ld\n", result->type, result->num);
+        lval_free(expanded);
+        
+        lval_free(a);
+        
+        return result;
+    }
+    
+    // If it's a lambda function
+    if (f->type == LVAL_LAMBDA) {
+        // Check number of arguments
+        if (f->lambda.formals->sexpr.count != a->sexpr.count) {
+            lval_free(a);
+            return lval_err("Function passed wrong number of arguments!");
+        }
+        
+        // Create new environment with parent set to lambda's environment
+        Lenv *new_env = lenv_new();
+        new_env->parent = f->lambda.env;
+        
+        // Bind arguments to formal parameters
+        for (int i = 0; i < f->lambda.formals->sexpr.count; i++) {
+            Lval *sym = f->lambda.formals->sexpr.cell[i];
+            Lval *val = a->sexpr.cell[i]; // Use the value directly
+            lenv_put(new_env, sym, val);
+        }
+        
+        // Evaluate the body in the new environment
+        Lval *result = eval(new_env, f->lambda.body);
+        
+        // Clean up
+        lval_free(a);
+        lenv_free(new_env);
+        
+        return result;
+    }
+    
+    // If it's a builtin function, handle as before
+    if (f->type == LVAL_FUN) {
+        if (strcmp(f->fun, "head") == 0) {
+            return builtin_head(a);
+        } else if (strcmp(f->fun, "tail") == 0) {
+            return builtin_tail(a);
+        } else if (strcmp(f->fun, "list") == 0) {
+            return builtin_list(a);
+        } else if (strcmp(f->fun, "cons") == 0) {
+            return builtin_cons(a);
+        } else if (strcmp(f->fun, "join") == 0) {
+            return builtin_join(a);
+        } else {
+            return builtin_op(e, a, f->fun);
+        }
+    }
+    
+    // If it's neither lambda nor builtin, return error
+    lval_free(a);
+    return lval_err("Unknown function type!");
+}
+
 Lval *builtin_def(Lenv *e, Lval *a) {
     // Remove the 'def' symbol
     Lval *def_sym = lval_pop(a, 0);
@@ -277,24 +426,28 @@ Lval *builtin_def(Lenv *e, Lval *a) {
     Lval *val = eval(e, lval_pop(a, 0));
     lval_free(a);
     
-    Lval *result = lenv_put(e, sym, val);
+    lenv_put(e, sym, val);
     lval_free(sym);
-    lval_free(val);
     
-    return result;
+    return val;
 }
 
 Lval *eval_sexpr(Lenv *e, Lval *v) {
     // Check for special forms before evaluating children
     if (v->sexpr.count > 0) {
         Lval *first = v->sexpr.cell[0];
-        
         if (first->type == LVAL_SYM) {
             if (strcmp(first->sym, "def") == 0) {
                 return builtin_def(e, v);
             }
             if (strcmp(first->sym, "if") == 0) {
                 return builtin_if(e, v);
+            }
+            if (strcmp(first->sym, "\\") == 0) {
+                return builtin_lambda(e, v);
+            }
+            if (strcmp(first->sym, "macro") == 0) {
+                return builtin_macro(e, v);
             }
         }
     }
@@ -323,7 +476,7 @@ Lval *eval_sexpr(Lenv *e, Lval *v) {
     
     // Ensure First Element is Function or Symbol
     Lval *f = lval_pop(v, 0);
-    if (f->type != LVAL_FUN && f->type != LVAL_SYM) {
+    if (f->type != LVAL_FUN && f->type != LVAL_SYM && f->type != LVAL_LAMBDA && f->type != LVAL_MACRO) {
         lval_free(f);
         lval_free(v);
         return lval_err("S-expression Does not start with function!");
@@ -334,29 +487,19 @@ Lval *eval_sexpr(Lenv *e, Lval *v) {
         Lval *func = lenv_get(e, f);
         lval_free(f);
         f = func;
-        if (f->type != LVAL_FUN) {
+        if (f->type != LVAL_FUN && f->type != LVAL_LAMBDA && f->type != LVAL_MACRO) {
             lval_free(f);
             lval_free(v);
             return lval_err("Symbol does not evaluate to function!");
         }
     }
     
-    // Call builtin with operator or list function
-    Lval *result;
-    if (strcmp(f->fun, "head") == 0) {
-        result = builtin_head(v);
-    } else if (strcmp(f->fun, "tail") == 0) {
-        result = builtin_tail(v);
-    } else if (strcmp(f->fun, "list") == 0) {
-        result = builtin_list(v);
-    } else if (strcmp(f->fun, "cons") == 0) {
-        result = builtin_cons(v);
-    } else if (strcmp(f->fun, "join") == 0) {
-        result = builtin_join(v);
-    } else {
-        result = builtin_op(e, v, f->fun);
+    // Call the function using the unified call mechanism
+    Lval *result = lval_call(e, f, v);
+    // Don't free f here - lval_call will handle it appropriately
+    // Only free f if it's a builtin function (not lambda or macro)
+    if (f->type == LVAL_FUN) {
+        lval_free(f);
     }
-    
-    lval_free(f);
     return result;
 }

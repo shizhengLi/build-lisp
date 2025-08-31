@@ -12,6 +12,8 @@ char *eval_tests();
 char *builtin_tests();
 char *environment_tests();
 char *conditional_tests();
+char *lambda_tests();
+char *macro_tests();
 
 int main() {
     char *result;
@@ -67,6 +69,20 @@ int main() {
     
     printf("Running Conditional tests...\n");
     result = conditional_tests();
+    if (result != 0) {
+        printf("%s\n", result);
+        return 1;
+    }
+    
+    printf("Running Lambda tests...\n");
+    result = lambda_tests();
+    if (result != 0) {
+        printf("%s\n", result);
+        return 1;
+    }
+    
+    printf("Running Macro tests...\n");
+    result = macro_tests();
     if (result != 0) {
         printf("%s\n", result);
         return 1;

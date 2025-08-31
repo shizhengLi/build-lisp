@@ -32,6 +32,24 @@ Lval *lval_fun(char *f) {
     return v;
 }
 
+Lval *lval_lambda(Lval *formals, Lval *body, Lenv *env) {
+    Lval *v = malloc(sizeof(Lval));
+    v->type = LVAL_LAMBDA;
+    v->lambda.formals = formals;
+    v->lambda.body = body;
+    v->lambda.env = env; // Reference the environment, don't copy it
+    return v;
+}
+
+Lval *lval_macro(Lval *formals, Lval *body, Lenv *env) {
+    Lval *v = malloc(sizeof(Lval));
+    v->type = LVAL_MACRO;
+    v->macro.formals = formals;
+    v->macro.body = body;
+    v->macro.env = env; // Reference the environment, don't copy it
+    return v;
+}
+
 Lval *lval_sexpr(void) {
     Lval *v = malloc(sizeof(Lval));
     v->type = LVAL_SEXPR;
@@ -47,6 +65,16 @@ void lval_free(Lval *v) {
         case LVAL_SYM: free(v->sym); break;
         case LVAL_ERR: free(v->err); break;
         case LVAL_FUN: free(v->fun); break;
+        case LVAL_LAMBDA:
+            lval_free(v->lambda.formals);
+            lval_free(v->lambda.body);
+            // Don't free env here as it's managed separately
+            break;
+        case LVAL_MACRO:
+            lval_free(v->macro.formals);
+            lval_free(v->macro.body);
+            // Don't free env here as it's managed separately
+            break;
         case LVAL_SEXPR:
             for (int i = 0; i < v->sexpr.count; i++) {
                 lval_free(v->sexpr.cell[i]);
@@ -110,6 +138,16 @@ Lval *lval_copy(Lval *v) {
             x->fun = malloc(strlen(v->fun) + 1);
             strcpy(x->fun, v->fun);
             break;
+        case LVAL_LAMBDA:
+            x->lambda.formals = lval_copy(v->lambda.formals);
+            x->lambda.body = lval_copy(v->lambda.body);
+            x->lambda.env = v->lambda.env; // Share the environment
+            break;
+        case LVAL_MACRO:
+            x->macro.formals = lval_copy(v->macro.formals);
+            x->macro.body = lval_copy(v->macro.body);
+            x->macro.env = v->macro.env; // Share the environment like lambda
+            break;
         case LVAL_SEXPR:
             x->sexpr.count = v->sexpr.count;
             x->sexpr.cell = malloc(sizeof(Lval*) * x->sexpr.count);
@@ -139,6 +177,12 @@ char *lval_to_string(Lval *v) {
             break;
         case LVAL_FUN:
             snprintf(result, 1024, "<function %s>", v->fun);
+            break;
+        case LVAL_LAMBDA:
+            snprintf(result, 1024, "<lambda>");
+            break;
+        case LVAL_MACRO:
+            snprintf(result, 1024, "<macro>");
             break;
         case LVAL_SEXPR:
             strcpy(result, "(");
