@@ -3,12 +3,19 @@
 
 
 http://daiyuwen.freeshell.org/gb/rol/roots_of_lisp.html
+
 https://www.paulgraham.com/avg.html
+
 https://www.paulgraham.com/diff.html
+
 https://www.paulgraham.com/lisplinks.html
+
 https://www.paulgraham.com/lispart.html
+
 https://www.paulgraham.com/apps.html
+
 https://www.paulgraham.com/people.html
+
 https://www.paulgraham.com/lispcode.html
 
 ## 目标
